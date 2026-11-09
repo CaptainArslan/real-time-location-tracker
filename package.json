@@ -1,0 +1,25 @@
+{
+  "name": "real-time-location-tracker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CaptainArslan/real-time-location-tracker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CaptainArslan/real-time-location-tracker/issues"
+  },
+  "homepage": "https://github.com/CaptainArslan/real-time-location-tracker#readme",
+  "dependencies": {
+    "ejs": "^7.0.2",
+    "express": "^5.3.0",
+    "socket.io": "^4.8.4"
+  }
+}
