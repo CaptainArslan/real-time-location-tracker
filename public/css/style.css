@@ -1,4 +1,63 @@
-* {
+/* ------------------------------------------------------------------
+   Location tracker — orienteering-map styling
+   Muted base map, with "overprint" magenta reserved for you.
+------------------------------------------------------------------- */
+
+:root {
+    --paper: #F6F7F4;
+    --surface: #FFFFFF;
+    --ink: #1E2A2F;
+    --muted: #5F6B70;
+    --line: rgba(30, 42, 47, 0.12);
+    --overprint: #B0247A;
+    --live: #2E8B57;
+    --warn: #A86400;
+    --shadow: 0 10px 30px rgba(30, 42, 47, 0.14);
+    --tiles: grayscale(1) contrast(0.92) brightness(1.04);
+
+    --font: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-display: 'Barlow Semi Condensed', 'Barlow', system-ui, sans-serif;
+
+    --gutter: 16px;
+    --sheet-h: 0px;
+    color-scheme: light;
+}
+
+/* Dark theme: used when the user picks "Dark", or picks "System" (no
+   data-theme) and their device is in dark mode. Keep both blocks in sync. */
+:root[data-theme="dark"] {
+    --paper: #1A2124;
+    --surface: #232C30;
+    --ink: #E7ECEA;
+    --muted: #9AA6AA;
+    --line: rgba(231, 236, 234, 0.14);
+    --overprint: #E2609F;
+    --live: #52C48C;
+    --warn: #E2A445;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    --tiles: grayscale(1) invert(1) brightness(0.86) contrast(0.88);
+    color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --paper: #1A2124;
+        --surface: #232C30;
+        --ink: #E7ECEA;
+        --muted: #9AA6AA;
+        --line: rgba(231, 236, 234, 0.14);
+        --overprint: #E2609F;
+        --live: #52C48C;
+        --warn: #E2A445;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        --tiles: grayscale(1) invert(1) brightness(0.86) contrast(0.88);
+        color-scheme: dark;
+    }
+}
+
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -8,4 +67,583 @@ html,
 body {
     width: 100%;
     height: 100%;
+}
+
+body {
+    font: 400 15px/1.45 var(--font);
+    color: var(--ink);
+    background: var(--paper);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+:focus-visible {
+    outline: 2px solid var(--overprint);
+    outline-offset: 2px;
+}
+
+/* ---------------- Map ---------------- */
+
+#map {
+    position: fixed;
+    inset: 0;
+}
+
+.leaflet-container {
+    background: var(--paper);
+    font-family: var(--font);
+}
+
+.leaflet-tile-pane {
+    filter: var(--tiles);
+}
+
+.leaflet-control-attribution.leaflet-control {
+    font-size: 11px;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
+}
+
+.leaflet-control-attribution a {
+    color: var(--ink);
+}
+
+/* ---------------- Panel ---------------- */
+
+.panel {
+    position: fixed;
+    top: var(--gutter);
+    left: var(--gutter);
+    z-index: 1000;
+    width: 340px;
+    max-height: calc(100% - var(--gutter) * 2);
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+}
+
+.panel-head {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--line);
+}
+
+.sheet-handle {
+    display: none;
+}
+
+.title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+h1 {
+    font: 700 23px/1.1 var(--font-display);
+    letter-spacing: -0.01em;
+}
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+    padding: 6px 11px 6px 9px;
+    border-radius: 999px;
+    font: 500 13px/1 var(--font);
+    color: var(--muted);
+    background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.status[data-state="live"] {
+    color: var(--live);
+}
+
+.status[data-state="offline"] {
+    color: var(--warn);
+}
+
+.panel-body {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 16px 20px 20px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* Name field */
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+.field input {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+}
+
+.field input::placeholder {
+    color: var(--muted);
+    opacity: 0.8;
+}
+
+.field input:focus-visible {
+    outline: none;
+    border-color: var(--overprint);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--overprint) 22%, transparent);
+}
+
+/* Location notices */
+
+.notice {
+    padding: 10px 12px;
+    border-left: 3px solid var(--muted);
+    border-radius: 4px 8px 8px 4px;
+    font-size: 14px;
+    background: color-mix(in srgb, var(--muted) 10%, transparent);
+}
+
+.notice[data-tone="warn"] {
+    border-left-color: var(--warn);
+    background: color-mix(in srgb, var(--warn) 10%, transparent);
+}
+
+.notice[data-tone="error"] {
+    border-left-color: var(--overprint);
+    background: color-mix(in srgb, var(--overprint) 9%, transparent);
+}
+
+/* People list */
+
+.list-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+h2 {
+    font: 600 17px/1.2 var(--font-display);
+}
+
+.count {
+    font-size: 13px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.people {
+    list-style: none;
+    margin: 0 -8px;
+}
+
+.person {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    text-align: left;
+}
+
+.person:hover {
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.person:focus-visible {
+    outline-offset: -2px;
+}
+
+.avatar {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--c);
+    color: #FFFFFF;
+    font: 600 14px/1 var(--font-display);
+}
+
+.avatar--self {
+    background: var(--surface);
+    border: 3px solid var(--overprint);
+}
+
+.avatar--self::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--overprint);
+}
+
+.person-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.person-name {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.person-sub {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.person-dist {
+    font: 600 16px/1 var(--font-display);
+    font-variant-numeric: tabular-nums;
+}
+
+.empty {
+    padding: 4px 0 2px;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.empty[hidden] {
+    display: none;
+}
+
+/* Invite */
+
+.copy-btn {
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1.5px solid var(--overprint);
+    border-radius: 8px;
+    background: none;
+    color: var(--overprint);
+    font-weight: 600;
+}
+
+.copy-btn:hover {
+    background: color-mix(in srgb, var(--overprint) 8%, transparent);
+}
+
+.copy-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Appearance switch */
+
+.theme-switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.segmented {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+.segmented label {
+    position: relative;
+}
+
+.segmented input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.segmented span {
+    display: block;
+    padding: 5px 12px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+.segmented input:hover + span {
+    color: var(--ink);
+}
+
+.segmented input:checked + span {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgba(30, 42, 47, 0.18);
+}
+
+.segmented input:focus-visible + span {
+    outline: 2px solid var(--overprint);
+    outline-offset: 1px;
+}
+
+/* ---------------- Map buttons ---------------- */
+
+.map-actions {
+    position: fixed;
+    top: calc(var(--gutter) + env(safe-area-inset-top));
+    right: var(--gutter);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.map-btn-group {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.map-btn {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    background: none;
+    color: var(--ink);
+}
+
+.map-btn + .map-btn {
+    border-top: 1px solid var(--line);
+}
+
+.map-btn:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.map-btn:focus-visible {
+    outline-offset: -3px;
+}
+
+.map-btn[aria-pressed="true"] {
+    color: var(--overprint);
+}
+
+.map-btn:disabled {
+    color: var(--muted);
+    opacity: 0.45;
+    cursor: default;
+}
+
+.map-btn:disabled:hover {
+    background: none;
+}
+
+.map-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.map-btn svg .fill {
+    fill: currentColor;
+    stroke: none;
+}
+
+/* ---------------- Markers ---------------- */
+
+.pin-icon {
+    background: none;
+    border: 0;
+}
+
+.pin {
+    position: relative;
+    width: 34px;
+    height: 34px;
+}
+
+.pin-dot {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border: 3px solid var(--surface);
+    border-radius: 50%;
+    background: var(--c);
+    color: #FFFFFF;
+    font: 600 14px/1 var(--font-display);
+    box-shadow: 0 2px 6px rgba(30, 42, 47, 0.35);
+}
+
+/* You: an orienteering control circle in overprint magenta */
+.pin--self .pin-dot {
+    border: 4px solid var(--overprint);
+    background: var(--surface);
+}
+
+.pin--self .pin-dot::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--overprint);
+}
+
+.pin--self::before {
+    content: "";
+    position: absolute;
+    inset: -12px;
+    border-radius: 50%;
+    background: var(--overprint);
+    opacity: 0;
+    animation: pulse 2.4s ease-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.45);
+        opacity: 0.4;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+.leaflet-tooltip.pin-label {
+    padding: 2px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    font: 600 13px/1.35 var(--font-display);
+    box-shadow: 0 1px 3px rgba(30, 42, 47, 0.18);
+}
+
+.leaflet-tooltip.pin-label::before {
+    display: none;
+}
+/* ---------------- Mobile: panel becomes a bottom sheet ---------------- */
+
+@media (max-width: 640px) {
+    :root {
+        --gutter: 12px;
+    }
+
+    .panel {
+        top: auto;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: auto;
+        max-height: 60vh;
+        max-height: 60dvh;
+        border-bottom: 0;
+        border-radius: 16px 16px 0 0;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .panel-head {
+        padding: 0 18px 12px;
+    }
+
+    .sheet-handle {
+        display: block;
+        position: relative;
+        width: 100%;
+        height: 24px;
+        border: 0;
+        background: none;
+    }
+
+    .sheet-handle::before {
+        content: "";
+        position: absolute;
+        top: 9px;
+        left: 50%;
+        width: 40px;
+        height: 4px;
+        margin-left: -20px;
+        border-radius: 2px;
+        background: color-mix(in srgb, var(--muted) 45%, transparent);
+    }
+
+    .panel[data-open="false"] .panel-head {
+        border-bottom: 0;
+    }
+
+    .panel[data-open="false"] .panel-body {
+        display: none;
+    }
+
+    .panel-body {
+        padding: 14px 18px 18px;
+    }
+
+    /* keep the map credit visible above the sheet */
+    .leaflet-bottom {
+        bottom: var(--sheet-h);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pin--self::before {
+        animation: none;
+        transform: scale(1);
+        opacity: 0.14;
+    }
 }

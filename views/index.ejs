@@ -3,17 +3,107 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real Time Location Tracker</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="favicon" href="/assets/map.png" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="See where everyone on this link is, live on a map.">
+    <meta name="theme-color" id="theme-color" content="#F6F7F4">
+    <title>Location Tracker</title>
+    <script>
+        // Apply the saved theme before the page paints (avoids a flash of the wrong theme)
+        try {
+            var savedTheme = localStorage.getItem('tracker-theme');
+            if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme;
+        } catch (e) { /* storage blocked: follow the system setting */ }
+    </script>
+    <link rel="icon" href="/assets/map.png" type="image/png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
         integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw=="
         crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 
 <body>
-    <div id="map" style="height: 100vh"></div>
+    <div id="map" role="application" aria-label="Live map of everyone on this link"></div>
+
+    <aside class="panel" id="panel" data-open="true" aria-label="People on the map">
+        <header class="panel-head">
+            <button class="sheet-handle" id="sheet-toggle" type="button" aria-expanded="true"
+                aria-controls="panel-body" aria-label="Hide people list"></button>
+            <div class="title-row">
+                <h1>Location tracker</h1>
+                <span class="status" id="status" data-state="connecting" role="status">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    <span id="status-text">Connecting</span>
+                </span>
+            </div>
+        </header>
+
+        <div class="panel-body" id="panel-body">
+            <label class="field">
+                <span class="field-label">Your name</span>
+                <input id="name-input" type="text" maxlength="24" autocomplete="nickname" spellcheck="false"
+                    placeholder="Add a name so others know it's you">
+            </label>
+
+            <p class="notice" id="notice" role="status" hidden></p>
+
+            <section class="people-section" aria-labelledby="people-title">
+                <div class="list-head">
+                    <h2 id="people-title">On the map</h2>
+                    <span class="count" id="people-count">0 people</span>
+                </div>
+                <ul class="people" id="people"></ul>
+                <p class="empty" id="empty">No one else is here yet. Send someone this page's link and they'll
+                    appear once their location comes in.</p>
+            </section>
+
+            <button class="copy-btn" id="copy-link" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" />
+                </svg>
+                <span id="copy-label">Copy invite link</span>
+            </button>
+
+            <div class="theme-switch" role="radiogroup" aria-labelledby="theme-label">
+                <span class="field-label" id="theme-label">Appearance</span>
+                <div class="segmented">
+                    <label><input type="radio" name="theme" value="system" checked><span>System</span></label>
+                    <label><input type="radio" name="theme" value="light"><span>Light</span></label>
+                    <label><input type="radio" name="theme" value="dark"><span>Dark</span></label>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="map-actions">
+        <div class="map-btn-group">
+            <button class="map-btn" id="zoom-in" type="button" aria-label="Zoom in" title="Zoom in">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            </button>
+            <button class="map-btn" id="zoom-out" type="button" aria-label="Zoom out" title="Zoom out">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
+            </button>
+        </div>
+        <div class="map-btn-group">
+            <button class="map-btn" id="locate-btn" type="button" aria-pressed="true" disabled aria-label="Follow my location"
+                title="Follow my location">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="6" />
+                    <circle cx="12" cy="12" r="1.6" class="fill" />
+                    <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+                </svg>
+            </button>
+            <button class="map-btn" id="fit-btn" type="button" aria-label="Show everyone" title="Show everyone">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+                </svg>
+            </button>
+        </div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
         integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g=="
