@@ -47,7 +47,8 @@ socket.on('receive-location', (data) => {
     }
 });
 
-socket.on('user-disconnected', (id) => {
+// Server sends { id: '<socket id>' }, so destructure to get the id string
+socket.on('user-disconnected', ({ id }) => {
     console.log('User disconnected:', id);
     if (marker[id]) {
         map.removeLayer(marker[id]);

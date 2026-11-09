@@ -21,12 +21,14 @@ io.on('connection', (socket) => {
             id: socket.id, ...data
         });
     });
-});
 
-
-io.on('disconnect', (socket) => {
-    console.log('WebSocket disconnected');
-    socket.broadcast.emit('user-disconnected', { id: socket.id });
+    // 'disconnect' fires on each individual socket (not on io), so it must be
+    // registered here, inside 'connection', where this user's socket exists.
+    socket.on('disconnect', (reason) => {
+        console.log('User disconnected:', socket.id, '-', reason);
+        // Tell every other client to remove this user's marker
+        socket.broadcast.emit('user-disconnected', { id: socket.id });
+    });
 });
 
 app.get('/', (req, res) => {
